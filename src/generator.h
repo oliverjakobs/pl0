@@ -3,18 +3,23 @@
 
 #include "common.h"
 
-void cg_const(const Token* token);
-void cg_var(const Token* token);
-void cg_call(const Token* token);
+void cgInit();
 
-void cg_symbol(const Token* token);
+void cgConst(const Token* token);
+void cgVar(const Token* token);
+void cgCall(const Token* token);
 
-void cg_procedure(int proc, const Token* token);
-void cg_epilogue(int proc);
+void cgSymbol(const Token* token);
 
-void cg_odd();
+void cgProcedure(int proc, const Token* token);
+void cgEpilogue(int proc);
 
-void cg_semicolon();
-void cg_end();
+void cgOdd();
+
+void cgWriteChar(const Token* token);
+void cgWriteInt(const Token* token);
+
+void cgSemicolon();
+void cgEnd();
 
 #endif

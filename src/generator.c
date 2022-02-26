@@ -12,19 +12,23 @@ static int aout(const char* fmt, ...) {
     return result;
 }
 
-void cg_const(const Token* token) {
+void cgInit() {
+    aout("#include <stdio.h>\n");
+}
+
+void cgConst(const Token* token) {
     aout("const long %.*s = ", token->len, token->start);
 }
 
-void cg_var(const Token* token) {
+void cgVar(const Token* token) {
     aout("long %.*s", token->len, token->start);
 }
 
-void cg_call(const Token* token) {
+void cgCall(const Token* token) {
     aout("%.*s()", token->len, token->start);
 }
 
-void cg_symbol(const Token* token) {
+void cgSymbol(const Token* token) {
     switch (token->type) {
     case TOK_IDENT:
     case TOK_NUMBER:    aout("%.*s", token->len, token->start); break;
@@ -50,7 +54,7 @@ void cg_symbol(const Token* token) {
     }
 }
 
-void cg_procedure(int proc, const Token* token) {
+void cgProcedure(int proc, const Token* token) {
     if (proc == 0) {
         aout("int main(int argc, char *argv[]) {\n");
     } else {
@@ -58,19 +62,27 @@ void cg_procedure(int proc, const Token* token) {
     }
 }
 
-void cg_epilogue(int proc) {
+void cgEpilogue(int proc) {
     if (proc == 0) aout("return 0;\n");
     aout("}\n\n");
 }
 
-void cg_odd() {
+void cgOdd() {
     aout(")&1");
 }
 
-void cg_semicolon() {
+void cgWriteChar(const Token* token) {
+    aout("fprintf(stdout, \"%%c\", (unsigned char) %.*s)", token->len, token->start);
+}
+
+void cgWriteInt(const Token* token) {
+    aout("fprintf(stdout, \"%%ld\", (long) %.*s)", token->len, token->start);
+}
+
+void cgSemicolon() {
     aout(";\n");
 }
 
-void cg_end(void) {
+void cgEnd(void) {
     aout("/* PL/0 compiler %s */\n", PL0C_VERSION);
 }

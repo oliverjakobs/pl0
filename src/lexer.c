@@ -22,6 +22,8 @@ static int identifierType(const char* start, const char* end) {
     if (checkKeyword(start, end, "while"))      return TOK_WHILE;
     if (checkKeyword(start, end, "do"))         return TOK_DO;
     if (checkKeyword(start, end, "odd"))        return TOK_ODD;
+    if (checkKeyword(start, end, "writeInt"))   return TOK_WRITE_INT;
+    if (checkKeyword(start, end, "writeChar"))  return TOK_WRITE_CHAR;
 
     return TOK_IDENT;
 }

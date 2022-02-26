@@ -16,6 +16,8 @@
 #define TOK_WHILE       'W'
 #define TOK_DO          'D'
 #define TOK_ODD         'O'
+#define TOK_WRITE_INT   'w'
+#define TOK_WRITE_CHAR  'H'
 #define TOK_DOT         '.'
 #define TOK_EQUAL       '='
 #define TOK_COMMA       ','

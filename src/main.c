@@ -31,11 +31,6 @@ const char* stream;
 symbol* symbols;
 
 /*
- * Misc. functions.
- */
-
-
-/*
  * Parser.
  */
 static void expression();
@@ -64,15 +59,15 @@ static void factor() {
     case TOK_IDENT:
         symbolsCheck(symbols, &token, CHECK_RHS);
     case TOK_NUMBER:
-        cg_symbol(&token);
+        cgSymbol(&token);
         next();
         break;
     case TOK_LPAREN:
-        cg_symbol(&token);
+        cgSymbol(&token);
         expect(TOK_LPAREN);
         expression();
         if (token.type == TOK_RPAREN)
-            cg_symbol(&token);
+            cgSymbol(&token);
         expect(TOK_RPAREN);
     }
 }
@@ -81,7 +76,7 @@ static void term(void) {
     factor();
 
     while (token.type == TOK_MULTIPLY || token.type == TOK_DIVIDE) {
-        cg_symbol(&token);
+        cgSymbol(&token);
         next();
         factor();
     }
@@ -89,14 +84,14 @@ static void term(void) {
 
 static void expression(void) {
     if (token.type == TOK_PLUS || token.type == TOK_MINUS) {
-        cg_symbol(&token);
+        cgSymbol(&token);
         next();
     }
 
     term();
 
     while (token.type == TOK_PLUS || token.type == TOK_MINUS) {
-        cg_symbol(&token);
+        cgSymbol(&token);
         next();
         term();
     }
@@ -104,10 +99,10 @@ static void expression(void) {
 
 static void condition() {
     if (token.type == TOK_ODD) {
-        cg_symbol(&token);
+        cgSymbol(&token);
         expect(TOK_ODD);
         expression();
-        cg_odd();
+        cgOdd();
     } else {
         expression();
 
@@ -116,7 +111,7 @@ static void condition() {
         case TOK_HASH:
         case TOK_LESSTHAN:
         case TOK_GREATERTHAN:
-            cg_symbol(&token);
+            cgSymbol(&token);
             next();
             break;
         default:
@@ -131,25 +126,25 @@ static void statement() {
     switch (token.type) {
     case TOK_IDENT:
         symbolsCheck(symbols, &token, CHECK_LHS);
-        cg_symbol(&token);
+        cgSymbol(&token);
         expect(TOK_IDENT);
         if (token.type == TOK_ASSIGN)
-            cg_symbol(&token);
+            cgSymbol(&token);
         expect(TOK_ASSIGN);
         expression();
-        cg_semicolon();
+        cgSemicolon();
         break;
     case TOK_CALL:
         expect(TOK_CALL);
         if (token.type == TOK_IDENT) {
             symbolsCheck(symbols, &token, CHECK_CALL);
-            cg_call(&token);
+            cgCall(&token);
         }
         expect(TOK_IDENT);
-        cg_semicolon();
+        cgSemicolon();
         break;
     case TOK_BEGIN:
-        cg_symbol(&token);
+        cgSymbol(&token);
         expect(TOK_BEGIN);
         statement();
         while (token.type == TOK_SEMICOLON) {
@@ -157,26 +152,48 @@ static void statement() {
             statement();
         }
         if (token.type == TOK_END)
-            cg_symbol(&token);
+            cgSymbol(&token);
         expect(TOK_END);
         break;
     case TOK_IF:
-        cg_symbol(&token);
+        cgSymbol(&token);
         expect(TOK_IF);
         condition();
         if (token.type == TOK_THEN)
-            cg_symbol(&token);
+            cgSymbol(&token);
         expect(TOK_THEN);
         statement();
         break;
     case TOK_WHILE:
-        cg_symbol(&token);
+        cgSymbol(&token);
         expect(TOK_WHILE);
         condition();
         if (token.type == TOK_DO)
-            cg_symbol(&token);
+            cgSymbol(&token);
         expect(TOK_DO);
         statement();
+        break;
+    case TOK_WRITE_INT:
+        expect(TOK_WRITE_INT);
+        if (token.type == TOK_IDENT || token.type == TOK_NUMBER) {
+            if (token.type == TOK_IDENT) symbolsCheck(symbols, &token, CHECK_RHS);
+            cgWriteInt(&token);
+            next();
+        } else {
+            errorAt(token.line, "writeInt takes an identifier or a number");
+        }
+        cgSemicolon();
+        break;
+    case TOK_WRITE_CHAR:
+        expect(TOK_WRITE_CHAR);
+        if (token.type == TOK_IDENT || token.type == TOK_NUMBER) {
+            if (token.type == TOK_IDENT) symbolsCheck(symbols, &token, CHECK_RHS);
+            cgWriteChar(&token);
+            next();
+        } else {
+            errorAt(token.line, "writeChar takes an identifier or a number");
+        }
+        cgSemicolon();
         break;
     }
 }
@@ -184,26 +201,26 @@ static void statement() {
 static void parseConst() {
     if (token.type == TOK_IDENT) {
         symbolsAdd(symbols, &token, TOK_CONST, depth);
-        cg_const(&token);
+        cgConst(&token);
     }
 
     expect(TOK_IDENT);
     expect(TOK_EQUAL);
 
     if (token.type == TOK_NUMBER) {
-        cg_symbol(&token);
+        cgSymbol(&token);
     }
     expect(TOK_NUMBER);
-    cg_semicolon();
+    cgSemicolon();
 }
 
 static void parseVar() {
     if (token.type == TOK_IDENT) {
         symbolsAdd(symbols, &token, TOK_VAR, depth);
-        cg_var(&token);
+        cgVar(&token);
     }
     expect(TOK_IDENT);
-    cg_semicolon();
+    cgSemicolon();
 }
 
 static void block() {
@@ -229,7 +246,7 @@ static void block() {
         expect(TOK_PROCEDURE);
         if (token.type == TOK_IDENT) {
             symbolsAdd(symbols, &token, TOK_PROCEDURE, depth);
-            cg_procedure(proc, &token);
+            cgProcedure(proc, &token);
         }
         expect(TOK_IDENT);
         expect(TOK_SEMICOLON);
@@ -242,11 +259,11 @@ static void block() {
         symbolsDestroy(symbols);
     }
 
-    if (proc == 0) cg_procedure(proc, &token);
+    if (proc == 0) cgProcedure(proc, &token);
 
     statement();
 
-    cg_epilogue(proc);
+    cgEpilogue(proc);
 
     if (--depth < 0) errorAt(token.line, "nesting depth fell below 0");
 }
@@ -258,7 +275,7 @@ static void parse() {
 
     if (token.type != 0) errorAt(token.line, "extra token at end of file");
 
-    cg_end();
+    cgEnd();
 }
 
 static void listToken() {
@@ -284,6 +301,7 @@ int main(int argc, char *argv[]) {
     stream = buffer;
 
     symbols = symbolsInit();
+    cgInit();
     parse();
 
     free(buffer);
